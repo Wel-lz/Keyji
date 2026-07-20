@@ -173,6 +173,96 @@
       }
     }
 
+    /* ---- Mobile polish: hero connector + comparison table + cards ---- */
+    /* Hero cycle diagram: stack the two halves early so the pill cycle gets full
+     width and never mid-wraps (which orphaned 日本語/↺ and collided the badge). */
+    @media (max-width:640px) {
+      .pcyc-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+      }
+
+      /* the horizontal connector arrow makes no sense once the halves stack */
+      .pcyc-sep {
+        display: none !important;
+      }
+
+      /* extra row-gap leaves room for the absolute "needed weekly" badge if a pill wraps */
+      .pcyc-pills {
+        row-gap: 30px !important;
+      }
+    }
+
+    @media (max-width:560px) {
+      /* Comparison table: tighten so more columns fit; horizontal scroll stays as fallback */
+      .cmp-table {
+        min-width: 420px !important;
+        font-size: 13px !important;
+      }
+
+      .cmp-table th {
+        padding: 14px 10px !important;
+        font-size: 11px !important;
+      }
+
+      .cmp-table td {
+        padding: 13px 14px !important;
+        font-size: 13px !important;
+      }
+    }
+
+    @media (max-width:440px) {
+      /* Drop the min-width floor and tighten padding so the 4-col table shrinks
+       to the phone width instead of forcing a horizontal scroll. */
+      .cmp-table {
+        min-width: 0 !important;
+        font-size: 12.5px !important;
+      }
+
+      .cmp-table th {
+        padding: 12px 8px !important;
+      }
+
+      .cmp-table td {
+        padding: 12px 10px !important;
+      }
+
+      .cmp-table th:first-child,
+      .cmp-table td:first-child {
+        padding: 12px 12px !important;
+      }
+
+      /* Cards at 1-per-row: switch to a horizontal layout — number badge on the
+       left, title + body stacked on the right. Reads tighter and more balanced
+       than a sparse centered stack, and keeps stacked cards visually even. */
+      .sol-grid>.sol-card {
+        padding: 16px 18px !important;
+        display: grid !important;
+        grid-template-columns: auto 1fr;
+        column-gap: 16px;
+        row-gap: 3px;
+        align-items: start;
+      }
+
+      .sol-card>*:nth-child(1) {
+        grid-column: 1;
+        grid-row: 1 / span 2;
+        align-self: start;
+      }
+
+      .sol-card>*:nth-child(2) {
+        grid-column: 2;
+        grid-row: 1;
+        margin-top: 0 !important;
+      }
+
+      .sol-card>*:nth-child(3) {
+        grid-column: 2;
+        grid-row: 2;
+        margin-top: 4px !important;
+      }
+    }
+
     /* 1 per row */
     .sol-card:hover {
       border-color: rgba(246, 178, 62, 0.4);
@@ -322,7 +412,7 @@
         <!-- switch-shortcut → layout cycle diagram (given more breathing room, p2.8) -->
         <div
           style="margin-top:22px;background:#18140f;border-radius:18px;padding:clamp(28px,4.5vw,42px);color:#f7f5f0;">
-          <div style="display:flex;align-items:center;gap:clamp(16px,3vw,30px);flex-wrap:wrap;">
+          <div class="pcyc-row" style="display:flex;align-items:center;gap:clamp(16px,3vw,30px);flex-wrap:wrap;">
             <div style="display:flex;flex-direction:column;gap:8px;">
               <span data-i18n="problem.pressLabel"
                 style="font-family:var(--wellz-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,240,0.45);">You
@@ -338,13 +428,13 @@
                 style="font-family:var(--wellz-mono);font-size:10px;letter-spacing:0.04em;color:rgba(247,245,240,0.4);">or
                 Alt+Shift · Ctrl+Shift</span>
             </div>
-            <span style="color:var(--wellz-amber-solid);font-size:22px;flex:none;">→</span>
+            <span class="pcyc-sep" style="color:var(--wellz-amber-solid);font-size:22px;flex:none;">→</span>
             <div
               style="flex:1;min-width:220px;border:1px solid rgba(247,245,240,0.14);border-radius:14px;padding:16px 18px;background:rgba(247,245,240,0.03);">
               <span data-i18n="problem.cycleLabel"
                 style="font-family:var(--wellz-mono);font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(247,245,240,0.45);">It
                 cycles your layouts</span>
-              <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:24px;">
+              <div class="pcyc-pills" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:24px;">
                 <span
                   style="font-family:var(--wellz-mono);font-size:13.5px;padding:8px 15px;border-radius:999px;background:rgba(247,245,240,0.08);border:1px solid rgba(247,245,240,0.16);">ENG</span>
                 <span style="color:rgba(247,245,240,0.35);">→</span>
@@ -492,7 +582,7 @@
           style="font-family:var(--wellz-mono);font-weight:700;font-size:clamp(26px,4.4vw,42px);line-height:1.12;letter-spacing:-0.02em;margin:14px 0 28px;max-width:20ch;">
           Keyji vs. the workarounds</h2>
         <div style="overflow-x:auto;border:1px solid rgba(247,245,240,0.1);border-radius:18px;">
-          <table style="width:100%;min-width:640px;border-collapse:collapse;font-size:14px;">
+          <table class="cmp-table" style="width:100%;min-width:480px;border-collapse:collapse;font-size:14px;">
             <thead>
               <tr>
                 <th
@@ -507,9 +597,6 @@
                 <th
                   style="padding:18px 16px;text-align:center;font-family:var(--wellz-mono);font-weight:700;font-size:13px;letter-spacing:-0.01em;color:rgba(247,245,240,0.72);">
                   Windows Settings</th>
-                <th
-                  style="padding:18px 16px;text-align:center;font-family:var(--wellz-mono);font-weight:700;font-size:13px;letter-spacing:-0.01em;color:rgba(247,245,240,0.72);">
-                  PowerToys</th>
               </tr>
             </thead>
             <tbody>
@@ -524,9 +611,6 @@
                 <td style="padding:16px;text-align:center;"><span
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.5);">~</span>
                 </td>
-                <td style="padding:16px;text-align:center;"><span
-                    style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.28);">✕</span>
-                </td>
               </tr>
               <tr style="border-top:1px solid rgba(247,245,240,0.08);">
                 <td data-i18n="compare.r2" style="padding:16px 20px;color:#f7f5f0;font-size:14.5px;line-height:1.4;">
@@ -535,9 +619,6 @@
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:#f6b23e;">✓</span></td>
                 <td style="padding:16px;text-align:center;"><span
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.5);">~</span>
-                </td>
-                <td style="padding:16px;text-align:center;"><span
-                    style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.28);">✕</span>
                 </td>
                 <td style="padding:16px;text-align:center;"><span
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.28);">✕</span>
@@ -553,8 +634,6 @@
                 <td style="padding:16px;text-align:center;"><span
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.28);">✕</span>
                 </td>
-                <td style="padding:16px;text-align:center;"><span
-                    style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:#f6b23e;">✓</span></td>
               </tr>
               <tr style="border-top:1px solid rgba(247,245,240,0.08);">
                 <td data-i18n="compare.r4" style="padding:16px 20px;color:#f7f5f0;font-size:14.5px;line-height:1.4;">
@@ -565,9 +644,6 @@
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:#f6b23e;">✓</span></td>
                 <td style="padding:16px;text-align:center;"><span
                     style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:#f6b23e;">✓</span></td>
-                <td style="padding:16px;text-align:center;"><span
-                    style="font-family:var(--wellz-mono);font-weight:700;font-size:17px;color:rgba(247,245,240,0.5);">~</span>
-                </td>
               </tr>
             </tbody>
           </table>
