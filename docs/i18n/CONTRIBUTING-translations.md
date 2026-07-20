@@ -1,67 +1,71 @@
-# Перевод Keyji на новый язык
+# Translating Keyji into a new language
 
-Keyji локализуется через плоские JSON-словари `ключ → строка`. Один язык — один файл;
-базовые языки (ru / en / ja) лежат в том же формате, что заполняет контрибьютор — отдельного
-«внутреннего» механизма нет.
+🌐 **English** · [Русский](CONTRIBUTING-translations.ru.md)
 
-> **Важно:** язык попадает в Keyji
-> **только через пересборку** — либо PR в этот репозиторий с ревью, либо форк-и-собери-сам.
-> Свободной загрузки файла рядом с `Keyji.exe` **нет**: сборка — единый self-contained `.exe`,
-> все языки вшиты внутрь бинаря (embedded). Это осознанный выбор (курируемое качество), а не
-> недоработка.
+Keyji is localized through flat `key → string` JSON dictionaries. One language per file;
+the base languages (ru / en / ja) live in the exact format a contributor fills in — there is
+no separate "internal" mechanism.
 
-## Где лежат переводы
+> **Important:** a language reaches Keyji **only through a rebuild** — either a reviewed PR to
+> this repository, or fork-and-build-it-yourself. There is **no** loose file you drop next to
+> `Keyji.exe`: the build is a single self-contained `.exe` with every language embedded inside
+> the binary. This is a deliberate choice (curated quality), not a limitation.
+
+## Where the translations live
 
 ```
 src/Keyji/Localization/Strings/
-├── ru.json   ← русский
-├── en.json   ← английский (шаблон и fallback)
-└── ja.json   ← японский
+├── ru.json   ← Russian
+├── en.json   ← English (template and fallback)
+└── ja.json   ← Japanese
 ```
 
-## Как добавить язык
+## How to add a language
 
-1. **Скопируйте `en.json`** — это канонический шаблон (полный набор ключей). Английский —
-   язык fallback: любой ключ, которого нет в вашем файле, показывается по-английски, поэтому
-   UI не ломается на неполном переводе.
-2. **Назовите файл с регионом** — BCP-47 с регионом: `pt-BR.json`, `zh-CN.json`, `de-DE.json`.
-   (Keyji выбирает язык по двухбуквенному коду системной локали, но имя файла держим полным
-   для однозначности.)
-3. **Переведите значения, не трогая ключи.** Ключ (слева от `:`) — идентификатор, он общий для
-   всех языков; переводится только строка справа.
-4. **Сохраните плейсхолдеры `{0}`, `{1}`.** Некоторые строки собираются с подстановкой (имя
-   языка, слово-статус, текст ошибки ОС). Порядок слов меняйте свободно — важно сохранить сами
-   плейсхолдеры. Пример: `"dialog.toggleFailed": "Couldn't {0} {1}."` — `{0}` глагол, `{1}` имя.
-5. **Сохраните ведущие символы**, если они несут смысл в строке (стрелки, предупреждающие
-   знаки). Бренд «Keyji» не переводится.
-6. **Зарегистрируйте файл в сборке.** В `src/Keyji/Keyji.csproj` уже есть
-   `<EmbeddedResource Include="Localization\Strings\*.json" />` — новый файл в этой папке
-   подхватывается автоматически, отдельная правка csproj не нужна.
-7. **Добавьте код языка в белый список.** В `src/Keyji/Localization/Loc.cs` в массив
-   `Supported` допишите двухбуквенный код (напр. `"de"`) — иначе на этой локали Keyji
-   останется на английском.
+1. **Copy `en.json`** — it is the canonical template (the full key set). English is the
+   fallback language: any key missing from your file is shown in English, so the UI never
+   breaks on an incomplete translation.
+2. **Name the file with a region** — BCP-47 with region: `pt-BR.json`, `zh-CN.json`,
+   `de-DE.json`. (Keyji picks the language by the two-letter system-locale code, but we keep
+   the file name fully qualified to avoid ambiguity.)
+3. **Translate the values, never the keys.** The key (left of the `:`) is an identifier shared
+   across all languages; only the string on the right gets translated.
+4. **Keep the placeholders `{0}`, `{1}`.** Some strings are assembled with substitution (a
+   language name, a status word, an OS error). Change the word order freely — just preserve the
+   placeholders themselves. Example: `"dialog.toggleFailed": "Couldn't {0} {1}."` — `{0}` is the
+   verb, `{1}` the name.
+5. **Keep leading glyphs** where they carry meaning in the string (arrows, warning signs). The
+   brand name "Keyji" is not translated.
+6. **Register the file in the build.** `src/Keyji/Keyji.csproj` already has
+   `<EmbeddedResource Include="Localization\Strings\*.json" />` — a new file in that folder is
+   picked up automatically, no separate csproj edit needed.
+7. **Add the language code to the allow-list.** In `src/Keyji/Localization/Loc.cs`, append the
+   two-letter code (e.g. `"de"`) to the `Supported` array — otherwise Keyji stays in English on
+   that locale.
 
-## Планка качества
+## Quality bar
 
-- Тон — дружелюбный и спокойный, как в русском/английском оригинале (не канцелярит).
-- **Японский** — единый вежливый регистр **です／ます (敬体)**.
-- Переводы проходят сверку с носителем языка перед вливанием (координирует мейнтейнер).
-  Черновик машинного перевода допустим как стартовая точка — носитель валидирует.
+- Tone — friendly and calm, like the Russian/English originals (not bureaucratic).
+- **Japanese** — a single polite register, **です／ます (敬体)**.
+- Translations are checked against a native speaker before merging (the maintainer coordinates
+  this). A machine-translation draft is acceptable as a starting point — a native speaker
+  validates it.
 
-## Проверка
+## Checking your work
 
-Соберите (`dotnet build`) и запустите Keyji. Выбор языка — в настройках панели
-(шестерёнка → «Язык»): дропдаун переключает язык **вживую**, без перезапуска, так удобно
-сверять и рендер, и откат на английский для незаполненных ключей.
+Build (`dotnet build`) and run Keyji. The language selector is in the panel settings
+(gear → "Language"): the dropdown switches language **live**, no restart, which makes it easy
+to check both the rendering and the English fallback for unfilled keys.
 
-Важно: этот дропдаун содержит только языки поставки (ru / en / ja) — **вашего нового языка в
-нём пока нет** (мейнтейнер добавит пункт при вливании). Чтобы проверить свой перевод до этого,
-переключите **язык интерфейса Windows** на него — Keyji выбирает язык по системной локали
-(шаг 7 выше вносит код в этот выбор). Более быстрый путь: впишите код напрямую в `settings.json`
-Keyji полем `"Language": "<код>"` и запустите. В обоих случаях сверьте рендер строк и fallback.
+Note: this dropdown only lists the shipped languages (ru / en / ja) — **your new language is not
+there yet** (the maintainer adds an entry when it's merged). To test your translation before
+that, switch the **Windows UI language** to it — Keyji picks the language from the system locale
+(step 7 above puts your code into that selection). A faster path: write the code directly into
+Keyji's `settings.json` via the `"Language": "<code>"` field and launch. Either way, verify the
+string rendering and the fallback.
 
-## Имена языков в списках — не отсюда
+## Language names in lists — not from here
 
-Названия самих языков (日本語 / Русский / English и их локализованные варианты в списке и
-тултипах) Keyji берёт у Windows, а не из этих файлов — переводить их не нужно и незачем.
-Локализуются только строки интерфейса (кнопки, подписи, подсказки, диалоги).
+The names of the languages themselves (日本語 / Русский / English and their localized variants in
+the list and tooltips) come from Windows, not from these files — there is no need to translate
+them. Only the interface strings (buttons, labels, hints, dialogs) are localized.

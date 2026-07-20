@@ -9,7 +9,7 @@ Keyji keeps a rarely-needed layout one click away — and out of your way the re
 <a href="https://github.com/Wel-lz/Keyji/stargazers"><img src="https://img.shields.io/github/stars/Wel-lz/Keyji?style=flat&color=yellow&cacheSeconds=300" alt="Stars"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat" alt="License: MIT"></a>
 
-🚧 **Status: v0.1 in development** — not released yet.
+✅ **v0.1.0 released** — [download the latest `.exe`](../../releases/latest) · Windows x64, one file, no install.
 
 <img src="https://flagcdn.com/20x15/gb.png" alt="" width="20"> **English** · [<img src="https://flagcdn.com/20x15/ru.png" alt="" width="20"> Русский](README_RU.md)
 
@@ -28,7 +28,7 @@ Neither fits a layout you need rarely but genuinely. That's the gap Keyji fills.
 
 ## How it works
 
-Keyji lives in the system tray. A click or a right-click toggle **turns a rare layout on or off** — added when you need it, gone when you don't, never cluttering your everyday cycle.
+Keyji lives in the system tray. A click opens the **Keyji panel** — a compact list where you toggle a rare layout on or off, added when you need it and gone when you don't. Pin the one you reach for most and a single click flips it straight from the tray, never cluttering your everyday cycle.
 
 - **One click from the tray** — enable or disable a layout instantly. No Settings, no cycling past it.
 - **Tray status at a glance** — the icon shows what's currently active.
@@ -48,7 +48,7 @@ It's **not** a replacement for `Win+Space`. Native switching cycles between your
 
 ## Screenshot
 
-> 🖼️ *Placeholder — tray menu & onboarding GIF land here at v0.1.* A branded look-and-feel preview already exists as a design test.
+> 🖼️ *Screenshot of the Keyji panel — landing here shortly.*
 
 ## How it compares
 
@@ -64,8 +64,8 @@ It's **not** a replacement for `Win+Space`. Native switching cycles between your
 
 Keyji is built in **C# / .NET (WPF)**.
 
-- **v0.1 (in progress)** — generalized toggle, onboarding window, tray toggles (click / right-click), autostart, native read/write, single `.exe`.
-- **After MVP** — global hotkey, installer + `winget`, auto-update, growing preset catalog, per-app rules *on request*.
+- **v0.1.0 (released)** — tray toggle panel (the main UI), first-run onboarding with a curated preset list and the full Windows catalog, optional pinned layout for one-click toggling, UI in English / Russian / Japanese, light & dark themes that follow Windows, autostart, native read/write (WinAPI / TSF), single self-contained `.exe`.
+- **Next** — global hotkey, signed installer + `winget`, auto-update, more curated presets, per-app rules *on request*.
 - **Never** — cross-platform, cloud sync, replacing `Win+Space`, turning into a settings behemoth.
 
 ## License
