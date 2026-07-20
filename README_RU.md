@@ -48,7 +48,12 @@ Keyji живёт в системном трее. Клик открывает **�
 
 ## Скриншот
 
-> 🖼️ *Скриншот панели Keyji — скоро появится здесь.*
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/panel-ru-dark.png">
+  <img alt="Панель Keyji — закреплённый японский и системные языки, в одном клике из трея" src="img/panel-ru-light.png" width="420">
+</picture>
+</div>
 
 ## Сравнение
 

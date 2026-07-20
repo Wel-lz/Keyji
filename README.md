@@ -48,7 +48,12 @@ It's **not** a replacement for `Win+Space`. Native switching cycles between your
 
 ## Screenshot
 
-> 🖼️ *Screenshot of the Keyji panel — landing here shortly.*
+<div align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="img/panel-en-dark.png">
+  <img alt="The Keyji panel — a pinned Japanese layout plus system languages, one click from the tray" src="img/panel-en-light.png" width="420">
+</picture>
+</div>
 
 ## How it compares
 
