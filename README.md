@@ -34,6 +34,7 @@ Keyji lives in the system tray. A click opens the **Keyji panel** — a compact 
 - **Tray status at a glance** — the icon shows what's currently active.
 - **Friendly onboarding** — pick your languages on first run from a curated preset list or the full Windows catalog. Built for non-technical users.
 - **Native and instant** — talks to Windows language profiles directly (WinAPI / TSF), no `powershell.exe` spawned per action. Toggles in well under 100 ms.
+- **Japanese starts in hiragana** — flip Japanese on and Keyji drops the IME straight into hiragana instead of leaving you in romaji/alphanumeric mode. On by default; toggle it from the Japanese layout's menu.
 - **One file, nothing to install** — download one self-contained `.exe`, double-click, done. No installer, no runtime to fetch.
 
 ## Who it's for
