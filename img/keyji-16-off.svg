@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="104 104 304 304" width="512" height="512">
+<defs><clipPath id="c"><rect x="104" y="104" width="304" height="304" rx="60"></rect></clipPath><linearGradient id="g" x1="120" y1="120" x2="392" y2="392" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#f6b23e"></stop><stop offset="1" stop-color="#d9660c"></stop></linearGradient></defs>
+<g clip-path="url(#c)"><polygon points="104,104 408,104 408,266 266,408 104,408" fill="#f7f5f0"></polygon><polygon points="310,408 408,310 408,408" fill="url(#g)"></polygon></g>
+<g transform="translate(181,179.5) scale(6.38)" fill="#16130f"><path fill-rule="evenodd" d="M 23.5 11.9 L 19.8 15.2 Q 17.6 12.1 14.5 8.85 Q 11.4 5.6 8.4 3.3 L 11.9 0 Q 14.8 2.2 18.15 5.6 Q 21.5 9 23.5 11.9 Z M 15.1 18.9 L 11.3 22.1 Q 9.2 19 6.1 15.75 Q 3 12.5 0 10.3 L 3.4 7 Q 6.3 9.2 9.65 12.6 Q 13 16 15.1 18.9 Z"></path></g>
+
+</svg>

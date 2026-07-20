@@ -1,0 +1,163 @@
+<ui:FluentWindow x:Class="Keyji.MainWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:tb="http://www.hardcodet.net/taskbar"
+                 xmlns:local="clr-namespace:Keyji"
+                 xmlns:loc="clr-namespace:Keyji.Localization"
+                 mc:Ignorable="d"
+                 Title="Keyji"
+                 Height="650" Width="540"
+                 MinHeight="420" MinWidth="460"
+                 ExtendsContentIntoTitleBar="True"
+                 WindowStartupLocation="CenterScreen"
+                 WindowBackdropType="Mica">
+
+    <!-- Окно вырождается в приветствие первого запуска: бренд-хиро + gesture-guide
+         (ПКМ/ЛКМ) + non-closable заметка «не перемещайте файл» + пикер постоянных языков.
+         Автозапуск и выход живут в панели. Дальше окно живёт скрытым хостом трей-иконки:
+         содержимое собрано в WelcomeRoot и гасится при закрытии (show-once, как прежний InfoBar). -->
+
+    <ui:FluentWindow.Resources>
+        <!-- Бренд-градиент Keyji (тот же, что у логотипа/трея): используется для gesture-бейджей. -->
+        <LinearGradientBrush x:Key="Welcome.BrandBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Offset="0" Color="#F6B23E" />
+            <GradientStop Offset="1" Color="#D9660C" />
+        </LinearGradientBrush>
+
+        <!-- Бейдж жеста (ПКМ/ЛКМ): бренд-плашка, Space Mono. Stretch → обе плашки в одной
+             Auto-колонке принимают ширину самой широкой, описания выравниваются. -->
+        <Style x:Key="Welcome.GestureBadge" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource Welcome.BrandBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+        <Style x:Key="Welcome.GestureTag" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="{StaticResource SpaceMono}" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="#FFFBF3" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Center" />
+        </Style>
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <ui:TitleBar Grid.Row="0" Title="Keyji" />
+
+        <!-- Контент может перерасти фиксированную высоту (длинный пикер языков) — прокрутка на
+             всякий случай, обычно не появляется. -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0">
+            <StackPanel x:Name="WelcomeRoot" Margin="28,8,28,28" Visibility="Collapsed">
+
+                <!-- Хиро: логотип + заголовок. Grid (а не горизонтальный StackPanel): заголовок
+                     получает ограниченную ширину и переносится, а не обрезается справа. -->
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image Grid.Column="0"
+                           Source="{StaticResource PanelLogo}"
+                           Width="46" Height="46"
+                           VerticalAlignment="Center"
+                           RenderOptions.BitmapScalingMode="HighQuality" />
+                    <ui:TextBlock Grid.Column="1"
+                                  FontTypography="Title"
+                                  VerticalAlignment="Center"
+                                  TextWrapping="Wrap"
+                                  Margin="16,0,0,0"
+                                  Text="{loc:T welcome.title}" />
+                </Grid>
+
+                <!-- Вводный абзац (слит из старых welcome.message + firstrun.subtitle). -->
+                <ui:TextBlock FontTypography="Body"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              TextWrapping="Wrap"
+                              Margin="0,0,0,12"
+                              Text="{loc:T welcome.intro}" />
+
+                <!-- Gesture-guide: два жеста мыши бренд-бейджами. Обе строки в одном Grid —
+                     Auto-колонка бейджей общая, описания выровнены по левому краю. -->
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Grid.Column="0"
+                            Style="{StaticResource Welcome.GestureBadge}"
+                            Margin="0,0,16,10">
+                        <TextBlock Style="{StaticResource Welcome.GestureTag}"
+                                   Text="{loc:T welcome.gesture.right.tag}" />
+                    </Border>
+                    <ui:TextBlock Grid.Row="0" Grid.Column="1"
+                                  FontTypography="Body"
+                                  VerticalAlignment="Center"
+                                  TextWrapping="Wrap"
+                                  Margin="0,0,0,10"
+                                  Text="{loc:T welcome.gesture.right.text}" />
+
+                    <Border Grid.Row="1" Grid.Column="0"
+                            Style="{StaticResource Welcome.GestureBadge}"
+                            Margin="0,0,16,0">
+                        <TextBlock Style="{StaticResource Welcome.GestureTag}"
+                                   Text="{loc:T welcome.gesture.left.tag}" />
+                    </Border>
+                    <ui:TextBlock Grid.Row="1" Grid.Column="1"
+                                  FontTypography="Body"
+                                  VerticalAlignment="Center"
+                                  TextWrapping="Wrap"
+                                  Text="{loc:T welcome.gesture.left.text}" />
+                </Grid>
+
+                <!-- Заметка «не перемещайте файл»: non-closable, тон как у autostartWarning. -->
+                <ui:InfoBar Margin="0,0,0,12"
+                            IsOpen="True"
+                            IsClosable="False"
+                            Severity="Warning"
+                            Title="{loc:T welcome.location.title}"
+                            Message="{loc:T welcome.location.text}" />
+
+                <!-- Пикер постоянных языков: только первый запуск, иначе свёрнут.
+                     Наполняется чекбоксами в code-behind из PermanentLanguages. -->
+                <ui:Card x:Name="PermanentPickerCard" Margin="0,0,0,10" Visibility="Collapsed">
+                    <StackPanel>
+                        <ui:TextBlock FontTypography="BodyStrong" Text="{loc:T firstrun.permanent.title}" />
+                        <ui:TextBlock FontTypography="Caption"
+                                      Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                      TextWrapping="Wrap" Margin="0,4,0,8"
+                                      Text="{loc:T firstrun.permanent.hint}" />
+                        <StackPanel x:Name="PermanentPickerPanel" />
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Финальная строка: окно закрываемо, приложение остаётся в трее. -->
+                <ui:TextBlock FontTypography="Caption"
+                              Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                              TextWrapping="Wrap"
+                              Text="{loc:T welcome.footer}" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Трей: иконка = статус закреплённого (три состояния); левый клик тоглит
+             закреплённый (или открывает панель без закрепа), ПКМ открывает панель. -->
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        ToolTipText="Keyji"
+                        TrayLeftMouseUp="TrayIcon_OnLeftMouseUp"
+                        TrayRightMouseDown="TrayIcon_OnRightMouseDown" />
+    </Grid>
+</ui:FluentWindow>

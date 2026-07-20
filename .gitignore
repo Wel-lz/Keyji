@@ -1,0 +1,26 @@
+# .NET build output
+[Bb]in/
+[Oo]bj/
+[Pp]ublish/
+
+# User-specific / IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Rider
+.idea/
+*.sln.iml
+
+# Build artifacts / distribution
+build/
+dist/
+release/
+*.zip
+
+# NuGet
+*.nupkg
+packages/

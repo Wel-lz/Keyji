@@ -1,0 +1,62 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- СВЕТЛАЯ тема панели. Перенос 1:1 CSS-токенов `kj-*` — селектор `.kj-win[data-theme="light"]`.
+
+         Набор ключей ОБЯЗАН совпадать с Theme.Dark.xaml один-в-один (см. комментарий там).
+         Порядок и разбивка на секции держатся такими же, чтобы дифф двух тем читался. -->
+
+    <!-- ====================== ПОВЕРХНОСТИ ====================== -->
+
+    <SolidColorBrush x:Key="PanelPageBrush" Color="#D8D2C4" />
+    <SolidColorBrush x:Key="PanelSurfaceBrush" Color="#E6E1D6" />
+    <!-- rgba(217,102,12,0.08) — светлая подложка берёт НЕ тот оранжевый,
+         что kj-accent (#C2660C), а более яркий #D9660C. Переносим как есть. -->
+    <SolidColorBrush x:Key="PanelPinnedBackgroundBrush" Color="#14D9660C" />
+    <!-- В светлой теме «…»-меню — чистая бумага, не оттенок поверхности. -->
+    <SolidColorBrush x:Key="PanelMenuBackgroundBrush" Color="#FFFFFF" />
+    <!-- rgba(24,20,15,0.03) -->
+    <SolidColorBrush x:Key="PanelInsetBrush" Color="#0818140F" />
+
+    <!-- ====================== ГРАНИЦЫ И HOVER ====================== -->
+
+    <!-- Светлая тема кладёт полупрозрачный ЧЁРНЫЙ (#18140F), а не белый: rgba(24,20,15,α) -->
+    <SolidColorBrush x:Key="PanelBorderBrush" Color="#1A18140F" />
+    <SolidColorBrush x:Key="PanelBorderStrongBrush" Color="#2E18140F" />
+    <SolidColorBrush x:Key="PanelHoverBrush" Color="#0D18140F" />
+
+    <!-- ====================== ТЕКСТ ====================== -->
+
+    <SolidColorBrush x:Key="PanelTextBrush" Color="#18140F" />
+    <SolidColorBrush x:Key="PanelTextDimBrush" Color="#4A4338" />
+    <SolidColorBrush x:Key="PanelMutedBrush" Color="#726A5C" />
+    <SolidColorBrush x:Key="PanelLabelBrush" Color="#8A8275" />
+    <SolidColorBrush x:Key="PanelMenuTextBrush" Color="#2A2620" />
+
+    <!-- ====================== АКЦЕНТ И СТАТУСЫ ====================== -->
+
+    <SolidColorBrush x:Key="PanelAccentBrush" Color="#C2660C" />
+    <SolidColorBrush x:Key="PanelDangerBrush" Color="#B4472A" />
+
+    <!-- ====================== ИКОНКИ ====================== -->
+
+    <!-- kj-icon: значение то же, что в тёмной теме (#8A8275) — не опечатка. -->
+    <SolidColorBrush x:Key="PanelIconBrush" Color="#8A8275" />
+    <!-- kj-icon2 в светлой теме уходит темнее, совпадая с тёмным kj-label. -->
+    <SolidColorBrush x:Key="PanelIcon2Brush" Color="#6A6357" />
+
+    <!-- ====================== ТОГЛ ВКЛ/ВЫКЛ ====================== -->
+
+    <SolidColorBrush x:Key="PanelTrackOffBrush" Color="#CFC8BB" />
+    <!-- В светлой теме ручка белая в ОБОИХ состояниях — knob-on = knob-off.
+         Ключи оставлены раздельными: тогл биндит их по состоянию, не зная темы. -->
+    <SolidColorBrush x:Key="PanelKnobOffBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="PanelKnobOnBrush" Color="#FFFFFF" />
+
+    <!-- ====================== ТЕНИ ====================== -->
+
+    <!-- Тени не адаптируются под светлую тему — значения те же, что в тёмной. -->
+    <Color x:Key="PanelShadowColor">#B3000000</Color>
+    <Color x:Key="PanelMenuShadowColor">#99000000</Color>
+
+</ResourceDictionary>

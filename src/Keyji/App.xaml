@@ -1,0 +1,20 @@
+<Application x:Class="Keyji.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:local="clr-namespace:Keyji"
+             ShutdownMode="OnExplicitShutdown">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Dark" />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="pack://application:,,,/Assets/TrayIcons.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/Assets/PanelIcons.xaml" />
+                <!-- Строго после PanelIcons: стили панели тянут оттуда шрифт и геометрии
+                     через StaticResource, а он ищет только в уже загруженных словарях. -->
+                <ResourceDictionary Source="pack://application:,,,/Assets/PanelStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,59 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <AssemblyName>Keyji</AssemblyName>
+    <Product>Keyji</Product>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\keyji.ico</ApplicationIcon>
+
+    <!-- Version Information для .exe:
+         осмысленные Product/Description/Company/Copyright — «непугающий» нативный вид.
+         AssemblyTitle → FileDescription, Company → CompanyName, Copyright → LegalCopyright. -->
+    <AssemblyTitle>Keyji — keyboard layout &amp; input switcher</AssemblyTitle>
+    <Description>Keyboard layout and input language switcher for Windows.</Description>
+    <Company>Wellz</Company>
+    <Authors>Wellz</Authors>
+    <Copyright>Copyright © 2026 Wellz</Copyright>
+  </PropertyGroup>
+
+  <!-- Release-сборка = один self-contained .exe (пункт назначения v0.1).
+       Флаги вшиты сюда, чтобы `dotnet publish -c Release -r win-x64` воспроизводимо
+       давал один файл без нативных cor3-DLL рядом и без .pdb. Debug не трогаем. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.3.0" />
+    <PackageReference Include="WPF-UI" Version="4.3.0" />
+  </ItemGroup>
+
+  <!-- Шрифты панели. Build action = Resource: файлы вшиваются в сам .exe
+       (в т.ч. при PublishSingleFile), подключаются как pack://.../#Space Mono.
+       Content/CopyToOutput сюда не годятся — они кладут файл рядом, не в бандл. -->
+  <ItemGroup>
+    <Resource Include="Assets\Fonts\SpaceMono-Regular.ttf" />
+    <Resource Include="Assets\Fonts\SpaceMono-Bold.ttf" />
+    <None Include="Assets\Fonts\OFL.txt" />
+  </ItemGroup>
+
+  <!-- Языки UI: плоский key→value JSON, вшитый в exe как EmbeddedResource —
+       живёт внутри single-file бандла, читается через GetManifestResourceStream (Loc.cs).
+       Имена ресурсов манифеста получают вид Keyji.Localization.Strings.<code>.json;
+       Loc ищет их по суффиксу .<code>.json, поэтому точное имя не завязано жёстко. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Localization\Strings\*.json" />
+  </ItemGroup>
+
+</Project>

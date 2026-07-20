@@ -1,0 +1,589 @@
+<Window x:Class="Keyji.Panel.PanelWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:panel="clr-namespace:Keyji.Panel"
+        xmlns:loc="clr-namespace:Keyji.Localization"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ShowInTaskbar="False"
+        Topmost="True"
+        ResizeMode="NoResize"
+        SizeToContent="WidthAndHeight"
+        ShowActivated="True"
+        Deactivated="OnDeactivated"
+        MouseLeftButtonDown="OnWindowMouseDown">
+
+    <!-- Кастомная панель-карта у трея.
+
+         ПОВЕРХНОСТЬ: borderless Window с per-pixel-прозрачностью
+         (не Popup), dismiss по Deactivated/Esc, якорь по WorkArea. Вложенные меню —
+         оверлей внутри ЭТОГО же HWND, иначе открытие меню роняет активацию и панель
+         закрывается сама (сам «…»-оверлей строит).
+
+         Цвета берутся из тем
+         ТОЛЬКО через DynamicResource: тема свапается на лету по системной, и
+         StaticResource оставил бы кисть замороженной.
+         Иконки/шрифт — Assets/PanelIcons.xaml, примитивы (тогл, чекбокс, кнопки) — Assets/PanelStyles.xaml.
+
+         ДОМЕНА ЗДЕСЬ НЕТ: строки — захардкоженный срез, чтобы
+         прогнать все состояния вёрстки. Живой набор языков подключается отдельно, наполняя
+         эти же коллекции другими PanelRowView. -->
+
+    <Window.Resources>
+        <!-- Правый блок строки: «…»-кебаб. Меню, которое он открывает, — ниже. -->
+        <Style x:Key="Panel.KebabButton" TargetType="Button" BasedOn="{StaticResource Panel.IconButton}">
+            <Setter Property="ToolTip" Value="{loc:T panel.tooltip.more}" />
+        </Style>
+
+        <!-- Пункт «…»-меню. Деструктивный («Убрать из набора») отбивается
+             разделителем сверху и красится в danger — как иконка выхода в футере. -->
+        <DataTemplate x:Key="Panel.MenuItemTemplate" DataType="{x:Type panel:PanelMenuItemView}">
+            <Border x:Name="Separator" BorderBrush="{DynamicResource PanelBorderStrongBrush}"
+                    BorderThickness="0" Margin="0">
+                <Button Style="{StaticResource Panel.MenuItem}" Click="OnRowMenuItem">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock x:Name="Text" Grid.Column="0" Text="{Binding Text}"
+                                   FontFamily="{StaticResource SpaceMono}" FontSize="14"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource PanelMenuTextBrush}" />
+                        <!-- Галочка чекаемого пункта — у ПРАВОГО края; когда снят, её просто
+                             нет (текст занимает всю ширину, пустого места слева не остаётся). -->
+                        <TextBlock x:Name="Check" Grid.Column="1" Text="✓" Margin="16,0,0,0"
+                                   Visibility="Collapsed"
+                                   FontFamily="{StaticResource SpaceMono}" FontSize="14"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource PanelMenuTextBrush}" />
+                    </Grid>
+                </Button>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsDestructive}" Value="True">
+                    <Setter TargetName="Separator" Property="BorderThickness" Value="0,1,0,0" />
+                    <Setter TargetName="Separator" Property="Margin" Value="0,5,0,0" />
+                    <Setter TargetName="Separator" Property="Padding" Value="0,5,0,0" />
+                    <Setter TargetName="Text" Property="Foreground"
+                            Value="{DynamicResource PanelDangerBrush}" />
+                </DataTrigger>
+                <!-- Чекаемый включён → галочка справа; снят/обычный пункт → галочки нет. -->
+                <DataTrigger Binding="{Binding IsChecked}" Value="True">
+                    <Setter TargetName="Check" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Строка каталога «+ добавить язык»: двухстрочное имя + аффорданс по
+             установленности. Установлен → «+» (клик кладёт язык в набор); пакета нет →
+             «скачать» (deep-link в параметры Windows). Ветку выбирает триггер по
+             Installed. Глиф ⤓ не используется (нечитаем) — только иконка загрузки + слово. -->
+        <DataTemplate x:Key="Panel.CatalogRowTemplate" DataType="{x:Type panel:CatalogEntryView}">
+            <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Button Style="{StaticResource Panel.CatalogRowButton}" Click="OnCatalogRow">
+                    <Grid Margin="26,13,20,13">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <!-- Фикс-ширина аффорданса: «+» и иконка загрузки центрируются в
+                                 одной оси, иначе разная ширина глифа/иконки в Auto-колонке даёт
+                                 разъезд по горизонтали между строками. -->
+                            <ColumnDefinition Width="28" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Style="{StaticResource Panel.NativeName}" Text="{Binding Native}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <!-- Локализованный лейбл от ОС бывает длинным (напр. китайский —
+                                 «КИТАЙСКИЙ, УПРОЩЁННОЕ ПИСЬМО (КОНТИНЕНТАЛЬНЫЙ КИТАЙ)»): режем
+                                 многоточием, а не жёстким клипом по краю колонки. -->
+                            <TextBlock Style="{StaticResource Panel.NameLabel}" Text="{Binding Label}"
+                                       ToolTip="{Binding Tooltip}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <!-- установлен → «+» -->
+                        <TextBlock x:Name="AddGlyph" Grid.Column="1" Text="+"
+                                   VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center"
+                                   Visibility="Collapsed"
+                                   FontFamily="{StaticResource SpaceMono}" FontWeight="Bold" FontSize="20"
+                                   Foreground="{DynamicResource PanelAccentBrush}" />
+
+                        <!-- пакета нет → «скачать»: только иконка загрузки (слово убрано),
+                             смысл несёт тултип. -->
+                        <StackPanel x:Name="DownloadHint" Grid.Column="1" Orientation="Horizontal"
+                                    VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+                            <Path Style="{StaticResource PanelIcon.Stroke}"
+                                  Data="{StaticResource Icon.Download.Geometry}"
+                                  Stroke="{DynamicResource PanelIcon2Brush}"
+                                  ToolTip="{loc:T panel.tooltip.download}"
+                                  Width="17" Height="17" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Grid>
+                </Button>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Installed}" Value="True">
+                    <Setter TargetName="AddGlyph" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Installed}" Value="False">
+                    <Setter TargetName="DownloadHint" Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Закреплённый: пин-глиф + имя, тогл + «…» -->
+        <DataTemplate x:Key="Panel.PinnedRowTemplate" DataType="{x:Type panel:PanelRowView}">
+            <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="26,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Path Style="{StaticResource PanelIcon.Fill}"
+                              Data="{StaticResource Icon.Pin.Geometry}"
+                              Fill="{DynamicResource PanelAccentBrush}"
+                              Width="16" Height="16" Margin="0,0,12,0"
+                              VerticalAlignment="Center" />
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource Panel.NativeName}" Text="{Binding Native}" />
+                            <TextBlock Style="{StaticResource Panel.NameLabel}" Text="{Binding Label}"
+                                       ToolTip="{Binding Tooltip}"
+                                       TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ToggleButton Style="{StaticResource Panel.Toggle}"
+                                      IsChecked="{Binding IsOn, Mode=TwoWay}"
+                                      Click="OnRowToggle" Margin="0,0,6,0" />
+                        <Button Style="{StaticResource Panel.KebabButton}" Click="OnRowMenu">
+                            <Path Style="{StaticResource PanelIcon.Fill}"
+                                  Data="{StaticResource Icon.Kebab.Geometry}"
+                                  Width="18" Height="18" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Обычный: имя + (тогл | «⤓ скачать») + «…» -->
+        <DataTemplate x:Key="Panel.NormalRowTemplate" DataType="{x:Type panel:PanelRowView}">
+            <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="26,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource Panel.NativeName}" Text="{Binding Native}" />
+                        <TextBlock Style="{StaticResource Panel.NameLabel}" Text="{Binding Label}"
+                                   ToolTip="{Binding Tooltip}" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Раскладки нет на машине: тогл включать нечего, вместо него
+                             «скачать». Кебаб при этом не показан. -->
+                        <Button x:Name="DownloadButton" Style="{StaticResource Panel.IconButton}"
+                                ToolTip="{loc:T panel.tooltip.download}" Visibility="Collapsed" Click="OnDownload">
+                            <Path Style="{StaticResource PanelIcon.Stroke}"
+                                  Data="{StaticResource Icon.Download.Geometry}"
+                                  Stroke="{DynamicResource PanelIcon2Brush}"
+                                  Width="18" Height="18" />
+                        </Button>
+
+                        <StackPanel x:Name="ToggleBlock" Orientation="Horizontal">
+                            <ToggleButton Style="{StaticResource Panel.Toggle}"
+                                          IsChecked="{Binding IsOn, Mode=TwoWay}"
+                                          Click="OnRowToggle" Margin="0,0,6,0" />
+                            <Button Style="{StaticResource Panel.KebabButton}" Click="OnRowMenu">
+                                <Path Style="{StaticResource PanelIcon.Fill}"
+                                      Data="{StaticResource Icon.Kebab.Geometry}"
+                                      Width="18" Height="18" />
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding Downloadable}" Value="True">
+                    <Setter TargetName="DownloadButton" Property="Visibility" Value="Visible" />
+                    <Setter TargetName="ToggleBlock" Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+
+        <!-- Системный: приглушённое имя + бейдж + «…».
+             Строка статична: ни тогла, ни remove — единственный путь наружу
+             это «Сделать обычным» в «…»-меню. -->
+        <DataTemplate x:Key="Panel.SystemRowTemplate" DataType="{x:Type panel:PanelRowView}">
+            <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="26,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock Style="{StaticResource Panel.NativeName}" Text="{Binding Native}"
+                                   Foreground="{DynamicResource PanelTextDimBrush}" />
+                        <TextBlock Style="{StaticResource Panel.NameLabel}" Text="{Binding Label}"
+                                   ToolTip="{Binding Tooltip}" TextTrimming="CharacterEllipsis"
+                                   Foreground="{DynamicResource PanelLabelBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border BorderBrush="{DynamicResource PanelBorderStrongBrush}" BorderThickness="1"
+                                CornerRadius="6" Padding="9,4" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <!-- Термин «СИСТЕМНЫЙ» заморожен (в коде — «постоянный»). -->
+                            <TextBlock Text="{loc:T panel.badge.system}"
+                                       FontFamily="{StaticResource SpaceMono}" FontWeight="Bold" FontSize="10"
+                                       Foreground="{DynamicResource PanelMutedBrush}" />
+                        </Border>
+                        <Button Style="{StaticResource Panel.KebabButton}" Click="OnRowMenu">
+                            <Path Style="{StaticResource PanelIcon.Fill}"
+                                  Data="{StaticResource Icon.Kebab.Geometry}"
+                                  Width="18" Height="18" />
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <!-- Корневой Grid = всё окно; поле 60 оставлено под тень карты. Поле обязано быть ≥
+         размаха тени (ShadowDepth+BlurRadius), иначе тень обрывается о край прозрачного
+         окна резкой линией. Значение синхронно с ShadowMargin в code-behind (якорь).
+         Слой оверлея «…»-меню — второй ребёнок этого же Grid. -->
+    <Grid Margin="60">
+        <Border x:Name="Card" Width="460" CornerRadius="22"
+                Background="{DynamicResource PanelSurfaceBrush}"
+                BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="1"
+                RenderTransformOrigin="0.5,1">
+            <Border.Effect>
+                <!-- Тень уходит вниз (Direction 270). Размах ShadowDepth+BlurRadius = 60 держим
+                     ≤ поля тени (60), иначе обрежется о край окна. -->
+                <DropShadowEffect BlurRadius="44" ShadowDepth="16" Direction="270"
+                                  Opacity="0.7" Color="{DynamicResource PanelShadowColor}" />
+            </Border.Effect>
+            <Border.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform x:Name="PopScale" ScaleX="1" ScaleY="1" />
+                    <TranslateTransform x:Name="PopTranslate" Y="0" />
+                </TransformGroup>
+            </Border.RenderTransform>
+
+            <StackPanel>
+                <!-- ==================== ШАПКА ==================== -->
+                <Grid Margin="26,22">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12">
+                        <Border.Background>
+                            <!-- Полноразмерный знак (`img/keyji-on.svg`), не трей-иконка:
+                                 у той глиф срисован под 16px и в шапке читается обрубком. -->
+                            <ImageBrush ImageSource="{StaticResource PanelLogo}" Stretch="Uniform" />
+                        </Border.Background>
+                    </Border>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0"
+                                VerticalAlignment="Center">
+                        <TextBlock Text="Keyji" FontFamily="{StaticResource SpaceMono}" FontWeight="Bold"
+                                   FontSize="30" Foreground="{DynamicResource PanelAccentBrush}" />
+                        <TextBlock x:Name="Caret" Text="_" FontFamily="{StaticResource SpaceMono}"
+                                   FontWeight="Bold" FontSize="30"
+                                   Foreground="{DynamicResource PanelAccentBrush}" />
+                    </StackPanel>
+
+                    <!-- Столбец инструментов пуст: оба dev-тогла (тема, язык) уехали
+                         в оверлей настроек настоящими настройками. Шапка = логотип + вордмарк. -->
+                </Grid>
+
+                <!-- Тело карты: список языков + добавление + настройки + футер. Экран-каталог
+                     «+ добавить язык» замещает ВЕСЬ MainBody (шапка выше — общая),
+                     поэтому обёрнуто в свой StackPanel для тогла видимости. -->
+                <StackPanel x:Name="MainBody">
+
+                <!-- ==================== ЗАКРЕПЛЁННЫЙ ==================== -->
+                <!-- Закреп опционален: группы может не быть вовсе. -->
+                <Border x:Name="PinnedGroup" Background="{DynamicResource PanelPinnedBackgroundBrush}">
+                    <ItemsControl x:Name="PinnedRows"
+                                  ItemTemplate="{StaticResource Panel.PinnedRowTemplate}" />
+                </Border>
+
+                <!-- ==================== ОБЫЧНЫЕ ==================== -->
+                <ItemsControl x:Name="NormalRows"
+                              ItemTemplate="{StaticResource Panel.NormalRowTemplate}" />
+
+                <!-- ==================== СИСТЕМНЫЕ ==================== -->
+                <ItemsControl x:Name="SystemRows"
+                              ItemTemplate="{StaticResource Panel.SystemRowTemplate}" />
+
+                <!-- ==================== + ДОБАВИТЬ ЯЗЫК ==================== -->
+                <!-- Форма самого флоу добавления ещё не финализирована — здесь только вход. -->
+                <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                    <Button Style="{StaticResource Panel.RowButton}" Click="OnAddLanguage"
+                            AutomationProperties.AutomationId="AddLanguageButton">
+                        <StackPanel Orientation="Horizontal" Margin="26,12">
+                            <TextBlock Text="+" FontFamily="{StaticResource SpaceMono}" FontWeight="Bold"
+                                       FontSize="15" Foreground="{DynamicResource PanelAccentBrush}"
+                                       VerticalAlignment="Center" />
+                            <TextBlock Text="{loc:T panel.addLanguage}" FontFamily="{StaticResource SpaceMono}"
+                                       FontWeight="Bold" FontSize="14" Margin="9,0,0,0"
+                                       Foreground="{DynamicResource PanelAccentBrush}"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Border>
+
+                <!-- Настройки больше не инлайн-аккордеон: перенесены
+                     в модальный оверлей SettingsLayer (ниже, слой в этом же HWND). -->
+
+                <!-- ==================== ФУТЕР ==================== -->
+                <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border Grid.Column="0" BorderBrush="{DynamicResource PanelBorderBrush}"
+                                BorderThickness="0,0,1,0">
+                            <!-- Шестерёнка открывает модальный оверлей настроек.
+                                 Шеврон снят вместе с аккордеоном: у модалки нет
+                                 «направления роста», которое он подсказывал. -->
+                            <Button Style="{StaticResource Panel.FooterLeftButton}" ToolTip="{loc:T panel.tooltip.settings}"
+                                    Click="OnToggleSettings">
+                                <Path Style="{StaticResource PanelIcon.Stroke}"
+                                      Data="{StaticResource Icon.Gear.Geometry}"
+                                      Stroke="{DynamicResource PanelIcon2Brush}"
+                                      Width="26" Height="26" Margin="18,12" />
+                            </Button>
+                        </Border>
+
+                        <Border Grid.Column="2" BorderBrush="{DynamicResource PanelBorderBrush}"
+                                BorderThickness="1,0,0,0">
+                            <Button Style="{StaticResource Panel.FooterRightButton}" ToolTip="{loc:T panel.tooltip.exit}"
+                                    Click="OnExit">
+                                <Path Style="{StaticResource PanelIcon.Stroke}"
+                                      Data="{StaticResource Icon.Exit.Geometry}"
+                                      Stroke="{DynamicResource PanelDangerBrush}"
+                                      Width="26" Height="26" Margin="18,12" />
+                            </Button>
+                        </Border>
+                    </Grid>
+                </Border>
+                </StackPanel>
+                <!-- /MainBody -->
+
+                <!-- ==================== ЭКРАН «+ ДОБАВИТЬ ЯЗЫК» ====================
+                     Замещает тело карты (шапка остаётся): «← Добавить язык», прокручиваемый
+                     список двухстрочных строк каталога, сноска про deep-link.
+                     Окно растёт вверх (нижний угол прибит якорем), список не дёргается. -->
+                <StackPanel x:Name="CatalogBody" Visibility="Collapsed">
+                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                        <Grid Margin="12,14,16,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Style="{StaticResource Panel.IconButton}"
+                                    Click="OnCatalogBack" ToolTip="{loc:T panel.tooltip.back}">
+                                <Path Data="M13 5 L6 12 L13 19 M6 12 H19" Stretch="Uniform"
+                                      Stroke="{DynamicResource PanelIcon2Brush}" StrokeThickness="2"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" Width="20" Height="20" />
+                            </Button>
+                            <TextBlock Grid.Column="1" Text="{loc:T catalog.title}" Margin="10,0,0,0"
+                                       VerticalAlignment="Center"
+                                       FontFamily="{StaticResource SpaceMono}" FontWeight="Bold" FontSize="14"
+                                       Foreground="{DynamicResource PanelTextBrush}" />
+                        </Grid>
+                    </Border>
+
+                    <!-- Пустой каталог — штатное состояние (всё уже в наборе/постоянных). -->
+                    <TextBlock x:Name="CatalogEmpty" Visibility="Collapsed"
+                               Text="{loc:T catalog.empty}" Margin="26,16" TextWrapping="Wrap"
+                               FontFamily="{StaticResource SpaceMono}" FontSize="12"
+                               Foreground="{DynamicResource PanelLabelBrush}" />
+
+                    <ScrollViewer MaxHeight="360" VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="CatalogItems"
+                                      ItemTemplate="{StaticResource Panel.CatalogRowTemplate}" />
+                    </ScrollViewer>
+
+                    <Border BorderBrush="{DynamicResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+                        <TextBlock Margin="26,11" TextWrapping="Wrap"
+                                   Text="{loc:T catalog.footnote}"
+                                   FontFamily="{StaticResource SpaceMono}" FontSize="11"
+                                   Foreground="{DynamicResource PanelLabelBrush}" />
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- ==================== «…»-МЕНЮ СТРОКИ (оверлей) ====================
+             Вложенное меню — оверлей в ЭТОМ же HWND, а не Popup: отдельное
+             окно роняет активацию панели и она закрывается сама.
+
+             Слой лежит поверх карты и повторяет её геометрию (Grid-ребёнок тех же
+             границ): click-catcher ловит клик мимо меню и закрывает ТОЛЬКО меню, не
+             панель. Клик по прозрачному полю тени мимо карты в слой не попадает и
+             по-прежнему закрывает панель целиком.
+
+             Позиция меню задаётся RenderTransform'ом, а не Margin: окно с
+             SizeToContent иначе выросло бы под меню нижней строки и дёрнулось бы
+             якорем. По той же причине меню выходит за пределы карты вниз свободно. -->
+        <Grid x:Name="RowMenuLayer" Visibility="Collapsed">
+            <Border Background="Transparent" MouseLeftButtonDown="OnRowMenuCatcher" />
+
+            <Border x:Name="RowMenu" HorizontalAlignment="Left" VerticalAlignment="Top"
+                    UseLayoutRounding="True"
+                    MinWidth="190" Padding="6" CornerRadius="12"
+                    Background="{DynamicResource PanelMenuBackgroundBrush}"
+                    BorderBrush="{DynamicResource PanelBorderStrongBrush}" BorderThickness="1"
+                    RenderTransformOrigin="0.5,0.5">
+                <Border.Effect>
+                    <!-- box-shadow: 0 20px 40px -12px — своя тень, мельче тени карты. -->
+                    <DropShadowEffect BlurRadius="32" ShadowDepth="12" Direction="270"
+                                      Opacity="0.6" Color="{DynamicResource PanelMenuShadowColor}" />
+                </Border.Effect>
+                <Border.RenderTransform>
+                    <TransformGroup>
+                        <!-- kj-pop: масштаб и подъём анимируются, смещение держит позицию у кебаба. -->
+                        <ScaleTransform x:Name="MenuPopScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="MenuPopTranslate" Y="0" />
+                        <TranslateTransform x:Name="MenuOffset" X="0" Y="0" />
+                    </TransformGroup>
+                </Border.RenderTransform>
+
+                <ItemsControl x:Name="RowMenuItems"
+                              ItemTemplate="{StaticResource Panel.MenuItemTemplate}" />
+            </Border>
+        </Grid>
+
+        <!-- ==================== CONFIRM «СКАЧАТЬ» (оверлей) ====================
+             Themed-диалог вместо нативного MessageBox: слой в ЭТОМ же HWND, не
+             отдельное окно — не роняет активацию панели и рисуется в теме. Инструкция к
+             установке языка + название в буфер по подтверждению; catcher закрывает только оверлей. -->
+        <Grid x:Name="ConfirmLayer" Visibility="Collapsed">
+            <Border Background="Transparent" MouseLeftButtonDown="OnConfirmCatcher" />
+
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True"
+                    MinWidth="300" MaxWidth="380" Padding="24,22" CornerRadius="16"
+                    Background="{DynamicResource PanelMenuBackgroundBrush}"
+                    BorderBrush="{DynamicResource PanelBorderStrongBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="16" Direction="270"
+                                      Opacity="0.6" Color="{DynamicResource PanelMenuShadowColor}" />
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="{loc:T confirm.title}" FontFamily="{StaticResource SpaceMono}"
+                               FontWeight="Bold" FontSize="15"
+                               Foreground="{DynamicResource PanelTextBrush}" Margin="0,0,0,12" />
+                    <TextBlock x:Name="ConfirmText" TextWrapping="Wrap" LineHeight="21"
+                               FontFamily="{StaticResource SpaceMono}" FontSize="12.5"
+                               Foreground="{DynamicResource PanelMenuTextBrush}" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+                        <Button Content="{loc:T confirm.cancel}" Style="{StaticResource Panel.DialogGhost}"
+                                Click="OnConfirmCancel" />
+                        <Button Content="{loc:T confirm.ok}" Style="{StaticResource Panel.DialogPrimary}"
+                                Click="OnConfirmOk" Margin="10,0,0,0" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ==================== НАСТРОЙКИ (модальный оверлей) ====================
+             Поверхность настроек = модальный оверлей в ЭТОМ же HWND, не инлайн-
+             аккордеон и не отдельное окно: центрированная
+             карточка поверх панели, dismiss по клику-мимо (catcher) и Esc — той же механикой,
+             что ConfirmLayer. Центрирование намеренно обходит рост-вверх/Reposition.
+             Состав растёт: сегмент темы и дропдаун языка встанут ВЫШЕ автозапуска
+             (порядок Тема→Язык→Автозапуск, без разделителя). -->
+        <Grid x:Name="SettingsLayer" Visibility="Collapsed">
+            <Border Background="Transparent" MouseLeftButtonDown="OnSettingsCatcher" />
+
+            <!-- UseLayoutRounding: центрирование layout'ом даёт дробную пиксельную позицию,
+                 из-за чего текст рендерится «мыльным» (в отличие от главной карты, прибитой
+                 к целым физ. пикселям якорем). Округление до пикселя возвращает чёткость. -->
+            <Border HorizontalAlignment="Center" VerticalAlignment="Center" UseLayoutRounding="True"
+                    MinWidth="300" MaxWidth="380" Padding="24,22" CornerRadius="16"
+                    Background="{DynamicResource PanelMenuBackgroundBrush}"
+                    BorderBrush="{DynamicResource PanelBorderStrongBrush}" BorderThickness="1">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="40" ShadowDepth="16" Direction="270"
+                                      Opacity="0.6" Color="{DynamicResource PanelMenuShadowColor}" />
+                </Border.Effect>
+                <StackPanel>
+                    <TextBlock Text="{loc:T panel.settings.title}" FontFamily="{StaticResource SpaceMono}"
+                               FontWeight="Bold" FontSize="15"
+                               Foreground="{DynamicResource PanelTextBrush}" Margin="0,0,0,18" />
+
+                    <!-- ==================== ТЕМА ====================
+                         Тристейт-сегмент «Системная · Светлая · Тёмная». Выбор пишет
+                         PanelTheme.SetPreference (live-swap) + поле Theme в settings.json.
+                         Начальный сегмент выставляет code-behind по PanelTheme.Preference. -->
+                    <TextBlock Text="{loc:T panel.settings.theme}" Margin="0,0,0,8"
+                               FontFamily="{StaticResource SpaceMono}" FontWeight="Bold" FontSize="12"
+                               Foreground="{DynamicResource PanelMutedBrush}" />
+                    <Border CornerRadius="10" Padding="3" Margin="0,0,0,18"
+                            Background="{DynamicResource PanelTrackOffBrush}">
+                        <UniformGrid Columns="3">
+                            <RadioButton x:Name="ThemeSystemSeg" GroupName="ThemePref" Tag="System"
+                                         Style="{StaticResource Panel.Segment}" Checked="OnThemePick"
+                                         Content="{loc:T panel.settings.theme.system}" />
+                            <RadioButton x:Name="ThemeLightSeg" GroupName="ThemePref" Tag="Light"
+                                         Style="{StaticResource Panel.Segment}" Checked="OnThemePick"
+                                         Content="{loc:T panel.settings.theme.light}" />
+                            <RadioButton x:Name="ThemeDarkSeg" GroupName="ThemePref" Tag="Dark"
+                                         Style="{StaticResource Panel.Segment}" Checked="OnThemePick"
+                                         Content="{loc:T panel.settings.theme.dark}" />
+                        </UniformGrid>
+                    </Border>
+
+                    <!-- ==================== ЯЗЫК ====================
+                         Дропдаун «Системный · Русский · English · 日本語»
+                         (Popup-ComboBox композится над оверлеем). System локализуется,
+                         три языка — эндонимами (собственное имя). Выбор пишет Loc.ApplyPreference
+                         (live) + поле Language; начальный пункт выставляет code-behind по Language. -->
+                    <TextBlock Text="{loc:T panel.settings.language}" Margin="0,0,0,8"
+                               FontFamily="{StaticResource SpaceMono}" FontWeight="Bold" FontSize="12"
+                               Foreground="{DynamicResource PanelMutedBrush}" />
+                    <ComboBox x:Name="LanguageSelect" Style="{StaticResource Panel.ComboBox}"
+                              Margin="0,0,0,18" SelectionChanged="OnLanguagePick">
+                        <ComboBoxItem Tag="System" Content="{loc:T panel.settings.language.system}" />
+                        <ComboBoxItem Tag="ru" Content="Русский" />
+                        <ComboBoxItem Tag="en" Content="English" />
+                        <ComboBoxItem Tag="ja" Content="日本語" />
+                    </ComboBox>
+
+                    <!-- Автозапуск: перенесён из снятого аккордеона, состав тот же
+                         (чекбокс + всегда-видимое предупреждение). -->
+                    <StackPanel Orientation="Horizontal">
+                        <CheckBox x:Name="LaunchOnStart" Style="{StaticResource Panel.CheckBox}"
+                                  Click="OnAutostartClick" VerticalAlignment="Center" />
+                        <TextBlock Text="{loc:T panel.settings.autostart}" Margin="12,0,0,0"
+                                   FontFamily="{StaticResource SpaceMono}" FontSize="13"
+                                   Foreground="{DynamicResource PanelTextBrush}"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{loc:T panel.settings.autostartWarning}"
+                               Margin="30,8,0,0" TextWrapping="Wrap"
+                               FontFamily="{StaticResource SpaceMono}" FontSize="11"
+                               Foreground="{DynamicResource PanelLabelBrush}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

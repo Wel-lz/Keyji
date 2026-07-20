@@ -1,0 +1,68 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Логотип Keyji как WPF-вектор, переведён из img/keyji-16-*.svg.
+         viewBox 512×512; H.NotifyIcon растеризует DrawingImage в HICON. -->
+
+    <!-- Общий тёмный глиф (транслит SVG-пути, transform translate(181,179.5) scale(6.38)). -->
+    <GeometryGroup x:Key="KeyjiGlyphGeometry" x:Shared="False">
+        <PathGeometry Figures="M23.5 11.9L19.8 15.2Q17.6 12.1 14.5 8.85Q11.4 5.6 8.4 3.3L11.9 0Q14.8 2.2 18.15 5.6Q21.5 9 23.5 11.9ZM15.1 18.9L11.3 22.1Q9.2 19 6.1 15.75Q3 12.5 0 10.3L3.4 7Q6.3 9.2 9.65 12.6Q13 16 15.1 18.9Z"
+                      FillRule="EvenOdd">
+            <PathGeometry.Transform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="6.38" ScaleY="6.38" />
+                    <TranslateTransform X="181" Y="179.5" />
+                </TransformGroup>
+            </PathGeometry.Transform>
+        </PathGeometry>
+    </GeometryGroup>
+
+    <!-- ВКЛючено: оранжевый градиент + кремовая насечка. -->
+    <DrawingImage x:Key="TrayIconOn">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="104,104,304,304" RadiusX="60" RadiusY="60" />
+                </DrawingGroup.ClipGeometry>
+                <!-- Плашка — пятиугольник со срезанным углом, а не полный прямоугольник:
+                     зазор между срезом (408,266 → 266,408) и уголком (с 310,408) — часть
+                     знака, в SVG он прозрачный. -->
+                <GeometryDrawing Geometry="M104,104 L408,104 L408,266 L266,408 L104,408 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="120,120" EndPoint="392,392" MappingMode="Absolute">
+                            <GradientStop Offset="0" Color="#F6B23E" />
+                            <GradientStop Offset="1" Color="#D9660C" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#EAE9E4" Geometry="M310,408 L408,310 L408,408 Z" />
+                <GeometryDrawing Brush="#16130F" Geometry="{StaticResource KeyjiGlyphGeometry}" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <!-- ВЫКЛючено: бледный кремовый квадрат, тот же глиф. -->
+    <DrawingImage x:Key="TrayIconOff">
+        <DrawingImage.Drawing>
+            <DrawingGroup>
+                <DrawingGroup.ClipGeometry>
+                    <RectangleGeometry Rect="104,104,304,304" RadiusX="60" RadiusY="60" />
+                </DrawingGroup.ClipGeometry>
+                <!-- Выключенная: плашка кремовая (#F7F5F0), уголок-загиб — оранжевый градиент
+                     (тот же, что у включённой) — как в обновлённом keyji-16-off.svg; между
+                     плашкой и уголком просвет-часть знака. -->
+                <GeometryDrawing Brush="#F7F5F0" Geometry="M104,104 L408,104 L408,266 L266,408 L104,408 Z" />
+                <GeometryDrawing Geometry="M310,408 L408,310 L408,408 Z">
+                    <GeometryDrawing.Brush>
+                        <LinearGradientBrush StartPoint="120,120" EndPoint="392,392" MappingMode="Absolute">
+                            <GradientStop Offset="0" Color="#F6B23E" />
+                            <GradientStop Offset="1" Color="#D9660C" />
+                        </LinearGradientBrush>
+                    </GeometryDrawing.Brush>
+                </GeometryDrawing>
+                <GeometryDrawing Brush="#16130F" Geometry="{StaticResource KeyjiGlyphGeometry}" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+</ResourceDictionary>
