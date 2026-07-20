@@ -7,7 +7,7 @@ Keyji держит редкую раскладку в одном клике — 
 
 <a href="#"><img src="https://img.shields.io/badge/platform-Windows-0078D6?style=flat&logo=windows&logoColor=white" alt="Windows"></a>
 <a href="https://github.com/Wel-lz/Keyji/stargazers"><img src="https://img.shields.io/github/stars/Wel-lz/Keyji?style=flat&color=yellow" alt="Stars"></a>
-<a href="LICENSE"><img src="https://img.shields.io/github/license/Wel-lz/Keyji?style=flat&color=brightgreen" alt="License: MIT"></a>
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat" alt="License: MIT"></a>
 
 🚧 **Статус: v0.1 в разработке** — ещё не выпущено.
 
